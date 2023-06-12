@@ -1022,7 +1022,7 @@ var getTertiaryEquation = () => {
         let bc4 = M/(BigInt(c54.level)+BigInt(1))/(BigInt(c54.level)+BigInt(1));
         let S=bc1+bc2+bc3+bc4;
         let Z=S-X;
-        let answer=M/Z;
+        let answer=(M+Z)/Z;
         log(answer);
         var CC=1000000000000;//trillion
         result+= "\\lceil\\frac{1}{distance}\\rceil ="+answer.toString();
