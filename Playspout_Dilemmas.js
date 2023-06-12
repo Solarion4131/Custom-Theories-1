@@ -2,27 +2,32 @@ import { ExponentialCost, FirstFreeCost, LinearCost } from "../api/Costs";
 import { Localization } from "../api/Localization";
 import { BigNumber, parseBigNumber } from "../api/BigNumber";
 import { theory } from "../api/Theory";
-import { Utils } from "../api/Utils";
+import { Utils, log } from "../api/Utils";
 import { FreeCost } from "../TheorySDK.Win.1.4.22/api/Costs";
 
 var id = "T9-DLC-MoI"
 var name = "Dilemmas";
 var description = "Additional lemmas similar to ones in Theory 9";
-var authors = "Playspout";
-var version = 0.4;
+var authors = "Playspout, Solarion";
+var version = 0.5;
 
 var c11, c12, c13;
 var c21, c22, c23, c24, c25;
 var c31, c32, c33;
 var c41, c42, c43, c44;
-var q51, q52, c51, c52, c53, c54, c55, c56, c57, c58;
+var q51, q52, c51, c52, c53, c54, t5;
+t5=0;
 var q61, q62, c61, c62, c63, c64;
 var q71, q72, c71, c72;
 var lemma;
 
 var PB = 100000;
+var M=BigInt("7128865274665093053166384155714272920668358861885893040452001991154324087581111499476444151913871586911717817019575256512980264067621009251465871004305131072686268143200196609974862745937188343705015434452523739745298963145674982128236956232823794011068809262317708861979540791247754558049326475737829923352751796735248042463638051137034331214781746850878453485678021888075373249921995672056932029099390891687487672697950931603520000");
+//gcd of first 1000 positive integers
+var X=BigInt("2622562973430295107642127459252919450184395646595502578138504393203528804870188137061452022373356561915796006188325279009014776721035318342687164210838375830617551092242834502364489724085459423561634573996354485629731537313705894976685959014917419521295550298375934333068719639648324941002052866277073019216500809066152175290458106999944284736134531286474668376655336575432821179471252817821679162496162622381608489930637747271163778");
+//e*M, all calculations are taken with M as denominator
 
-const lemmaCount = 4;
+const lemmaCount = 6;
 var provedLemmas = 0;
 var initialQ = [BigNumber.ZERO, BigNumber.ZERO, BigNumber.ZERO, BigNumber.ZERO, BigNumber.ZERO, BigNumber.ZERO, BigNumber.ZERO, BigNumber.ZERO];
 var qs = Array.from(initialQ);
@@ -201,7 +206,7 @@ var init = () => {
     {
         let getDesc = (level) => "q_1=" + getQ51(level).toString(0);
         let getInfo = (level) => "q_1=" + getQ51(level).toString(0);
-        q51 = theory.createUpgrade(baseId + 0, currency, new ExponentialCost(10, Math.log2(3)));
+        q51 = theory.createUpgrade(baseId + 0, currency, new ExponentialCost(80, Math.log2(2)));
         q51.getDescription = (amount) => Utils.getMath(getDesc(q51.level));
         q51.getInfo = (amount) => Utils.getMathTo(getInfo(q51.level), getInfo(q51.level + amount));
     }
@@ -210,7 +215,7 @@ var init = () => {
     {
         let getDesc = (level) => "q_2=2^{" + level + "}";
         let getInfo = (level) => "q_2=" + getQ52(level).toString(0);
-        q52 = theory.createUpgrade(baseId + 1, currency, new ExponentialCost(30, Math.log2(10)));
+        q52 = theory.createUpgrade(baseId + 1, currency, new ExponentialCost(8, Math.log2(4)));
         q52.getDescription = (amount) => Utils.getMath(getDesc(q52.level));
         q52.getInfo = (amount) => Utils.getMathTo(getInfo(q52.level), getInfo(q52.level + amount));
     }
@@ -219,7 +224,7 @@ var init = () => {
     {
         let getDesc = (level) => "c_1=" + getC5i(level).toString(0);
         let getInfo = (level) => "c_1=" + getC5i(level).toString(0);
-        c51 = theory.createUpgrade(baseId + 2, currency, new FreeCost());
+        c51 = theory.createUpgrade(baseId + 2, currency, new FirstFreeCost(new ExponentialCost(1e6,Math.log2(2.1))));
         c51.getDescription = (amount) => Utils.getMath(getDesc(c51.level));
         c51.getInfo = (amount) => Utils.getMathTo(getInfo(c51.level), getInfo(c51.level + amount));
     }
@@ -228,7 +233,7 @@ var init = () => {
     {
         let getDesc = (level) => "c_2=" + getC5i(level).toString(0);
         let getInfo = (level) => "c_2=" + getC5i(level).toString(0);
-        c52 = theory.createUpgrade(baseId + 3, currency, new ExponentialCost(1e6, Math.log2(1.1)));
+        c52 = theory.createUpgrade(baseId + 3, currency, new ExponentialCost(1e6, Math.log2(2.1)));
         c52.getDescription = (amount) => Utils.getMath(getDesc(c52.level));
         c52.getInfo = (amount) => Utils.getMathTo(getInfo(c52.level), getInfo(c52.level + amount));
     }
@@ -237,7 +242,7 @@ var init = () => {
     {
         let getDesc = (level) => "c_3=" + getC5i(level).toString(0);
         let getInfo = (level) => "c_3=" + getC5i(level).toString(0);
-        c53 = theory.createUpgrade(baseId + 4, currency, new ExponentialCost(1e11, Math.log2(1.1)));
+        c53 = theory.createUpgrade(baseId + 4, currency, new ExponentialCost(1e6, Math.log2(2.1)));
         c53.getDescription = (amount) => Utils.getMath(getDesc(c53.level));
         c53.getInfo = (amount) => Utils.getMathTo(getInfo(c53.level), getInfo(c53.level + amount));
     }
@@ -246,46 +251,14 @@ var init = () => {
     {
         let getDesc = (level) => "c_4=" + getC5i(level).toString(0);
         let getInfo = (level) => "c_4=" + getC5i(level).toString(0);
-        c54 = theory.createUpgrade(baseId + 5, currency, new ExponentialCost(1e13, Math.log2(1.1)));
+        c54 = theory.createUpgrade(baseId + 5, currency, new ExponentialCost(1e6, Math.log2(2.1)));
         c54.getDescription = (amount) => Utils.getMath(getDesc(c54.level));
         c54.getInfo = (amount) => Utils.getMathTo(getInfo(c54.level), getInfo(c54.level + amount));
     }
 
-    // c5
-    {
-        let getDesc = (level) => "c_5=" + getC5i(level).toString(0);
-        let getInfo = (level) => "c_5=" + getC5i(level).toString(0);
-        c55 = theory.createUpgrade(baseId + 6, currency, new ExponentialCost(1e15, Math.log2(1.08)));
-        c55.getDescription = (amount) => Utils.getMath(getDesc(c55.level));
-        c55.getInfo = (amount) => Utils.getMathTo(getInfo(c55.level), getInfo(c55.level + amount));
-    }
+    
 
-    // c6
-    {
-        let getDesc = (level) => "c_6=" + getC5i(level).toString(0);
-        let getInfo = (level) => "c_6=" + getC5i(level).toString(0);
-        c56 = theory.createUpgrade(baseId + 7, currency, new ExponentialCost(1e17, Math.log2(1.06)));
-        c56.getDescription = (amount) => Utils.getMath(getDesc(c56.level));
-        c56.getInfo = (amount) => Utils.getMathTo(getInfo(c56.level), getInfo(c56.level + amount));
-    }
-
-    // c7
-    {
-        let getDesc = (level) => "c_7=" + getC5i(level).toString(0);
-        let getInfo = (level) => "c_7=" + getC5i(level).toString(0);
-        c57 = theory.createUpgrade(baseId + 8, currency, new ExponentialCost(1e19, Math.log2(1.02)));
-        c57.getDescription = (amount) => Utils.getMath(getDesc(c57.level));
-        c57.getInfo = (amount) => Utils.getMathTo(getInfo(c57.level), getInfo(c57.level + amount));
-    }
-
-    // c8
-    {
-        let getDesc = (level) => "c_8=" + getC5i(level).toString(0);
-        let getInfo = (level) => "c_8=" + getC5i(level).toString(0);
-        c58 = theory.createUpgrade(baseId + 9, currency, new ExponentialCost(1e21, Math.log2(1.01)));
-        c58.getDescription = (amount) => Utils.getMath(getDesc(c58.level));
-        c58.getInfo = (amount) => Utils.getMathTo(getInfo(c58.level), getInfo(c58.level + amount));
-    }
+    
 
     // Lemma 6
     baseId += 100;
@@ -412,7 +385,7 @@ var init = () => {
             case 2: cost = 4.05e22; break;
             case 3: cost = 2e15; break; 
             case 4: cost = 1.0001e10; break; // To compensate for numerical errors
-            case 5: cost = 1e25; break;
+            case 5: cost = 1e22; break;
             case 6: cost = 1e15; break;
             case 7: cost = 1e15; break;
         }
@@ -461,10 +434,6 @@ var updateAvailability = () => {
     c52.isAvailable = lemma.level == 4;
     c53.isAvailable = lemma.level == 4;
     c54.isAvailable = lemma.level == 4;
-    c55.isAvailable = lemma.level == 4;
-    c56.isAvailable = lemma.level == 4;
-    c57.isAvailable = lemma.level == 4;
-    c58.isAvailable = lemma.level == 4;
 
     q61.isAvailable = lemma.level == 5;
     q62.isAvailable = lemma.level == 5;
@@ -499,8 +468,7 @@ var tick = (elapsedTime, multiplier) => {
         case 2: isLemmaStarted |= c21.level > 0 || c23.level > 0; break;
         case 3: isLemmaStarted |= c31.level > 0; break;
         case 4: isLemmaStarted |= c41.level > 0; break;
-        case 5: isLemmaStarted |= c51.level > 0 || c52.level > 0 || c53.level > 0 || c54.level > 0 ||
-                                  c55.level > 0 || c56.level > 0 || c57.level > 0 || c58.level > 0; break;
+        case 5: isLemmaStarted |= c51.level > 0 || c52.level > 0 || c53.level > 0 || c54.level > 0; break;
         case 6: isLemmaStarted |= c61.level > 0 || q62.level > 0; break;
         case 7: isLemmaStarted |= q71.level > 0; break;
     }
@@ -656,24 +624,54 @@ var tick = (elapsedTime, multiplier) => {
         }
         else if (lemmaNumber == 5)
         {
-            let bc1 = BigNumber.from(c51.level).pow(BigNumber.FOUR) * (2 * 1 - c51.level);
-            let bc2 = BigNumber.from(c52.level).pow(BigNumber.FOUR) * (2 * 4 - c52.level);
-            let bc3 = BigNumber.from(c53.level).pow(BigNumber.FOUR) * (2 * 9 - c53.level);
-            let bc4 = BigNumber.from(c54.level).pow(BigNumber.FOUR) * (2 * 16 - c54.level);
-            let bc5 = BigNumber.from(c55.level).pow(BigNumber.FOUR) * (2 * 25 - c55.level);
-            let bc6 = BigNumber.from(c56.level).pow(BigNumber.FOUR) * (2 * 36 - c56.level);
-            let bc7 = BigNumber.from(c57.level).pow(BigNumber.FOUR) * (2 * 49 - c57.level);
-            let bc8 = BigNumber.from(c58.level).pow(BigNumber.FOUR) * (2 * 64 - c58.level);
-            let t1 = bc1 * q;
-            let t2 = bc2 * q;
-            let t3 = bc3 * q;
-            let t4 = bc4 * q;
-            let t5 = bc5 * q;
-            let t6 = bc6 * q;
-            let t7 = bc7 * q;
-            let t8 = bc8 * q;
-            qDifferential = (t1 + t2 + t3 + t4 + t5 + t6 + t7 + t8);
-            currency.value += dt * qDifferential;
+            switch(c14.level+1) {
+
+                
+                case 1:
+                    k = 1.6;
+                    break;
+                case 2:
+                    if(q > 600) {
+                        k = 0;
+                    } else if(q > 500) {
+                        k = 0.5;
+                    } else {
+                        k = 1.0;
+                    }
+                    break;
+                case 3:
+                    if(q > 500) {
+                        k = 0;
+                    }  else {
+                        k = 1;
+                    }
+                    break;
+                case 4:
+                    if(q > 500) {
+                        k = 0;
+                    } else if(q > 420) {
+                        k = 0.3;
+                    } else {
+                        k = 1;
+                    }
+                    break;
+                
+
+
+            }
+            
+            let bc1 = M/(BigInt(c51.level)+BigInt(1))/(BigInt(c51.level)+BigInt(1));
+            let bc2 = M/(BigInt(c52.level)+BigInt(1))/(BigInt(c52.level)+BigInt(1));
+            let bc3 = M/(BigInt(c53.level)+BigInt(1))/(BigInt(c53.level)+BigInt(1));
+            let bc4 = M/(BigInt(c54.level)+BigInt(1))/(BigInt(c54.level)+BigInt(1));
+            let S=bc1+bc2+bc3+bc4;
+            let Z=S-X;
+            let answer=M/Z;
+            var away=BigNumber.from(Z)/BigNumber.from(M);
+            answer=BigNumber.from(answer);
+            qDifferential = (answer.abs()+1);
+            currency.value += k * dt * qs[lemma.level]*qDifferential;
+            t5 += dt;
         }
         else if (lemmaNumber == 6)
         {
@@ -791,7 +789,22 @@ var getPrimaryEquation = () => {
         if (lemma.level == 1) result += "Dilemma \\; 2";
         if (lemma.level == 2) result += "Dilemma \\; 3";
         if (lemma.level == 3) result += "Dilemma \\; 4";
-        if (lemma.level == 4) result += "\\scriptstyle{\\lim\\limits_{t \\to \\infty}} \\tau\\: >\\: 0";
+        if (lemma.level == 4) 
+            switch(c14.level+1) {
+                
+                case 1:
+                    result += "\\quad\\quad\\quad \\quad \\quad \\quad \\quad Dilemma \\; 5 \\\\t>0 => \\dot{\\rho}=160\\%";
+                    break;
+                case 2:
+                    result += "\\quad\\quad\\quad \\quad \\quad \\quad \\quad Dilemma \\; 5 \\\\t>500 => \\dot{\\rho}=50\\%,\\;t>600 => \\dot{\\rho}=0";
+                    break;
+                case 3:
+                    result += "\\quad\\quad\\quad \\quad \\quad \\quad \\quad Dilemma \\; 5 \\\\t>500 => \\dot{\\rho}=0\\%";
+                    break;
+                case 4:
+                    result += "\\quad\\quad\\quad \\quad \\quad \\quad \\quad Dilemma \\; 5 \\\\t>420 => \\dot{\\rho}=30\\%,\\;t>500 => \\dot{\\rho}=0";
+                    break;
+            } 
         if (lemma.level == 5) result += "\\scriptstyle{\\lim\\limits_{t \\to \\infty}} e^{bx_i\\varphi\\tau dt}\\: >\\: 1";
         if (lemma.level == 6) result += "\\scriptstyle{\\lim\\limits_{t \\to \\infty}} \\frac{e^t f(e^t)}{f(t)}\\: >\\: 1";
 
@@ -949,10 +962,13 @@ var getSecondaryEquation = () => {
     else if (lemmaNumber == 5)
     {
         result += "\\begin{matrix}";
-        result += "\\dot{\\rho}=\\sum_{i=1}^8 c_i^4(2i^2-c_i) q";
+        result += "\\dot{\\rho}=q\\lceil|\\frac{1}{e}-\\sum_{i=1}^4 \\frac{1}{c_i^2}|^{-1}\\rceil ";
         result += "\\\\";
         result += "\\dot{q}=q_1q_2";
+        result += "\\\\";
+        result += "\\dot{t}=1"
         result += "\\end{matrix}";
+
     }
     else if (lemmaNumber == 6)
     {
@@ -992,10 +1008,32 @@ var getTertiaryEquation = () => {
     result += "";
     result+= ""
     
+    if (lemma.level==4) {
+        result += "q=";
+        result += q.toString();
+        result += ", "
+        result += "\\; \\; \\; \\;";
+        result += "t=";
+        result += t5.toString();
+        result += "\\; \\; \\; \\;";
+        let bc1 = M/(BigInt(c51.level)+BigInt(1))/(BigInt(c51.level)+BigInt(1));
+        let bc2 = M/(BigInt(c52.level)+BigInt(1))/(BigInt(c52.level)+BigInt(1));
+        let bc3 = M/(BigInt(c53.level)+BigInt(1))/(BigInt(c53.level)+BigInt(1));
+        let bc4 = M/(BigInt(c54.level)+BigInt(1))/(BigInt(c54.level)+BigInt(1));
+        let S=bc1+bc2+bc3+bc4;
+        let Z=S-X;
+        let answer=M/Z;
+        log(answer);
+        var CC=1000000000000;//trillion
+        result+= "\\lceil\\frac{1}{distance}\\rceil ="+answer.toString();
+    }
+    else{
+        result += "t=";
+        result += q.toString();
+        result += "\\; \\; \\; \\;";
+    }
     
-    result += "t=";
-    result += q.toString();
-    result += "\\; \\; \\; \\;";
+    
     
     result += "\\; \\; \\; \\; \\text{Difficulty :} ";
     switch(c14.level+1) {
@@ -1067,7 +1105,7 @@ var getC44 = (level) => BigNumber.from(level+1);
 
 var getQ51 = (level) => Utils.getStepwisePowerSum(level, 2, 10, 1);
 var getQ52 = (level) => BigNumber.TWO.pow(level);
-var getC5i = (level) => BigNumber.from(level);
+var getC5i = (level) => BigNumber.from(level)+1;
 
 var getQ61 = (level) => Utils.getStepwisePowerSum(level, 2, 10, 1);
 var getQ62 = (level) => BigNumber.TWO.pow(level);
@@ -1121,10 +1159,7 @@ var resetStage = () => {
             c52.level = 0;
             c53.level = 0;
             c54.level = 0;
-            c55.level = 0;
-            c56.level = 0;
-            c57.level = 0;
-            c58.level = 0;
+            t5 = 0;
             c14.isAvailable = true;
             break;
         case 6:
